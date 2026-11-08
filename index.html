@@ -1,12 +1,471 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>My GitHub Page</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hand Gesture Communicator – SVS Symposium 2026</title>
+<meta name="description" content="A desktop app that reads ASL letters and custom hand gestures from a webcam, speaks them aloud, and includes a spelling game. Built with Python, MediaPipe, and machine learning.">
+
+<!-- Open Graph & Social Sharing -->
+<meta property="og:title" content="Hand Gesture Communicator – SVS Symposium 2026">
+<meta property="og:description" content="Real-time ASL letter and custom gesture recognition powered by MediaPipe and machine learning.">
+<meta property="og:image" content="images/letters.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<style>
+:root {
+  --bg: #fafaf7;
+  --surface: #ffffff;
+  --surface-2: #f1f1ec;
+  --text: #1c1d21;
+  --muted: #5a5d66;
+  --border: #deded6;
+  --accent: #1d4ed8;
+  --accent-text: #ffffff;
+  --accent-soft: #e6ecfb;
+  --good: #15803d;
+  --code-bg: #14161a;
+  --code-text: #e8e9ed;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111316;
+    --surface: #191c21;
+    --surface-2: #20242b;
+    --text: #ecedf0;
+    --muted: #a3a7b1;
+    --border: #2d323b;
+    --accent: #7aa2ff;
+    --accent-text: #0b1020;
+    --accent-soft: #1b2438;
+    --good: #4ade80;
+    --code-bg: #0b0c0f;
+    --code-text: #e8e9ed;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111316;
+  --surface: #191c21;
+  --surface-2: #20242b;
+  --text: #ecedf0;
+  --muted: #a3a7b1;
+  --border: #2d323b;
+  --accent: #7aa2ff;
+  --accent-text: #0b1020;
+  --accent-soft: #1b2438;
+  --good: #4ade80;
+  --code-bg: #0b0c0f;
+  --code-text: #e8e9ed;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+  font-size: 17px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+a { color: var(--accent); }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+/* top bar */
+header.bar {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+header.bar .wrap { display: flex; align-items: center; gap: 18px; min-height: 56px; flex-wrap: wrap; }
+.brand { font-weight: 700; text-decoration: none; color: var(--text); margin-right: auto; }
+nav { display: flex; align-items: center; }
+nav a { text-decoration: none; color: var(--muted); font-size: 15px; margin-left: 14px; }
+nav a:hover { color: var(--accent); }
+.theme-btn {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer; padding: 6px 10px; margin-left: 16px; font-size: 14px; color: var(--text);
+}
+@media (max-width: 720px) { nav a { display: none; } }
+
+/* hero */
+.hero { padding: 64px 0 40px; }
+.eyebrow {
+  display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent); background: var(--accent-soft); padding: 4px 12px; border-radius: 999px;
+}
+h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.1; margin: 18px 0 16px; letter-spacing: -0.02em; }
+.lead { font-size: 20px; color: var(--muted); max-width: 680px; margin: 0 0 26px; }
+.btns { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn {
+  display: inline-block; padding: 11px 20px; border-radius: 10px; font-weight: 600; text-decoration: none;
+  border: 1px solid var(--border); color: var(--text); background: var(--surface);
+}
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.btn:hover { filter: brightness(1.06); }
+
+/* sections */
+section { padding: 44px 0; border-top: 1px solid var(--border); }
+h2 { font-size: 30px; margin: 0 0 8px; letter-spacing: -0.01em; }
+h3 { font-size: 19px; margin: 0 0 6px; }
+.sub { color: var(--muted); margin: 0 0 24px; max-width: 720px; }
+p { margin: 0 0 14px; }
+
+.grid { display: grid; gap: 16px; }
+.grid.three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+.card .key {
+  display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 1px 8px; font-size: 14px; margin-bottom: 10px;
+}
+.card p { margin: 0; color: var(--muted); font-size: 16px; }
+
+/* graphical previews */
+.shot { margin: 0; }
+.shot img, .placeholder {
+  width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); display: block;
+  background: var(--surface-2);
+}
+.placeholder {
+  display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px;
+  color: var(--muted); font-size: 14px; border-style: dashed;
+}
+.shot figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+/* pipeline */
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin: 8px 0 4px; }
+.step {
+  flex: 1 1 150px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+}
+.step b { display: block; font-size: 15px; margin-bottom: 2px; }
+.step span { font-size: 14px; color: var(--muted); }
+.step.hl { border-color: var(--accent); background: var(--accent-soft); }
+.arrow { align-self: center; color: var(--muted); font-size: 22px; }
+.branches { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-top: 10px; }
+
+/* mediapipe */
+.mp { display: grid; gap: 28px; grid-template-columns: minmax(240px, 320px) 1fr; align-items: start; }
+@media (max-width: 760px) { .mp { grid-template-columns: 1fr; } }
+.handbox { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+.handbox svg { width: 100%; height: auto; display: block; }
+.handbox .cap { font-size: 13px; color: var(--muted); text-align: center; margin: 6px 0 0; }
+.hand-line { stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
+.hand-dot { fill: var(--accent); }
+.hand-dot.tip { fill: var(--good); }
+.hand-label { font-size: 11px; fill: var(--text); font-family: ui-monospace, Menlo, Consolas, monospace; }
+ol.steps { padding-left: 0; list-style: none; counter-reset: s; margin: 0 0 14px; }
+ol.steps li { counter-increment: s; position: relative; padding-left: 46px; margin-bottom: 14px; }
+ol.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-text); font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+ol.steps li b { display: block; margin-bottom: 2px; }
+.note { background: var(--accent-soft); border-radius: 12px; padding: 14px 18px; font-size: 16px; }
+
+/* asl section */
+.asl { display: grid; gap: 28px; grid-template-columns: 1fr 1fr; align-items: start; }
+@media (max-width: 760px) { .asl { grid-template-columns: 1fr; } }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+.chip { background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px; font-size: 14px; }
+.chip.no { text-decoration: line-through; color: var(--muted); }
+.alphabet-chart-wrap { margin-top: 18px; }
+.alphabet-chart-wrap img {
+  width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; background: var(--surface);
+}
+
+/* stack */
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; font-size: 16px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); font-size: 14px; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 600; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+
+/* code */
+pre {
+  background: var(--code-bg); color: var(--code-text); padding: 18px 20px; border-radius: 12px; overflow-x: auto;
+  font-size: 14.5px; line-height: 1.6; margin: 0 0 14px;
+}
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+p code, li code, td code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: 14px; }
+
+ul.plain { padding-left: 20px; margin: 0 0 14px; }
+ul.plain li { margin-bottom: 6px; }
+
+footer { border-top: 1px solid var(--border); padding: 30px 0 48px; color: var(--muted); font-size: 15px; }
+</style>
 </head>
 <body>
-  <h1>Hello, World!</h1>
-  <p>This is hosted for free on GitHub Pages.</p>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#top">Hand Gesture Communicator</a>
+    <nav>
+      <a href="#modes">Modes</a>
+      <a href="#asl">ASL Alphabet</a>
+      <a href="#mediapipe">MediaPipe</a>
+      <a href="#how">How it works</a>
+      <a href="#stack">Tech stack</a>
+      <a href="#run">Run it</a>
+      <button class="theme-btn" id="theme-toggle" aria-label="Toggle theme">🌓 Theme</button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<div class="wrap hero">
+  <span class="eyebrow">SVS Symposium 2026 · STEAM</span>
+  <h1>Hand Gesture Communicator</h1>
+  <p class="lead">A desktop app that tracks your hands through a webcam, recognizes static ASL letters and custom dynamic phrases, speaks them aloud in real-time, and turns sign practice into a game.</p>
+  <div class="btns">
+    <a class="btn primary" href="https://github.com/ericktitusk/gesture-communicator">View on GitHub</a>
+    <a class="btn" href="#run">Run Instructions</a>
+    <a class="btn" href="#mediapipe">How it works</a>
+  </div>
+</div>
+
+
+
+<section id="modes">
+  <div class="wrap">
+    <h2>Three Modes</h2>
+    <p class="sub">Unified landmark detection feeding three real-time pipelines.</p>
+    <div class="grid three">
+      <div class="card">
+        <span class="key">1</span>
+        <h3>Letters</h3>
+        <p>Recognizes static ASL letters (A through Y). Stable gestures are appended to a word line and voiced aloud via text-to-speech.</p>
+      </div>
+      <div class="card">
+        <span class="key">2</span>
+        <h3>Phrases</h3>
+        <p>Classifies dynamic custom gestures (e.g., waving hello, swipes, thumbs-up) over continuous 30-frame sequence buffers.</p>
+      </div>
+      <div class="card">
+        <span class="key">3</span>
+        <h3>Game</h3>
+        <p>Presents random 3-letter vocabulary challenges. Form each target sign in order to advance the score and practice sign literacy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="asl">
+  <div class="wrap">
+    <h2>What is ASL?</h2>
+    <p class="sub">American Sign Language is a rich visual-spatial language with its own morphology and syntax.</p>
+    <div class="asl">
+      <div>
+        <p><b>ASL</b> is a natural language utilized across Deaf communities. Signs are formed by combining hand configuration, orientation, location, movement patterns, and facial expressions.</p>
+        <p><b>Fingerspelling</b> represents letters on one hand to spell names, titles, and loan words. While a subset of natural signing, it provides an ideal baseline for landmark computer vision systems.</p>
+        <h3>Supported Signs</h3>
+        <div class="chips" aria-label="Letters supported">
+          <span class="chip">A–I</span><span class="chip no">J (motion)</span><span class="chip">K–Y</span><span class="chip no">Z (motion)</span>
+        </div>
+        <p style="color:var(--muted);font-size:15px">Letters <b>J</b> and <b>Z</b> involve continuous trajectory tracing in the air; our static classifier evaluates fixed landmark coordinates, making them ideal targets for dynamic phrase recording.</p>
+      </div>
+      <div>
+        <h3>Fingerspelling Symbol Chart</h3>
+        <figure class="shot alphabet-chart-wrap">
+          <img src="images/asl-alphabet.png" alt="ASL fingerspelling alphabet reference chart showing hand shapes for letters A to Z">
+          <figcaption>Fingerspelling Hand Shapes Reference (A–Z)</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="mediapipe">
+  <div class="wrap">
+    <h2>How MediaPipe Tracks Hands</h2>
+    <p class="sub">Raw video frames are converted into lightweight 21-point geometric skeletons.</p>
+    <div class="mp">
+      <div class="handbox">
+        <svg id="hand" viewBox="0 0 300 340" role="img" aria-label="Diagram of the 21 hand landmarks: wrist and four joints per finger"></svg>
+        <p class="cap">The 21 landmarks. Green points denote fingertips.</p>
+      </div>
+      <div>
+        <p><b>Google MediaPipe Hands</b> provides real-time multi-hand perception across two cooperative models:</p>
+        <ol class="steps">
+          <li>
+            <b>Palm Detection</b>
+            <span>An oriented bounding box detector identifies palm positions, which remain consistent even under finger articulation.</span>
+          </li>
+          <li>
+            <b>21 Landmark Regression</b>
+            <span>Predicts 21 3D coordinates (x, y, z) directly within the cropped palm region with sub-pixel precision.</span>
+          </li>
+          <li>
+            <b>Tracking Pipeline</b>
+            <span>Landmarks from previous frames seed subsequent region bounding boxes, bypassing full-frame scans until tracking is interrupted.</span>
+          </li>
+        </ol>
+        <div class="note"><b>Landmarks vs. Pixels:</b> Eliminating background pixels, skin variations, and room lighting allows compact neural nets to train on 63 normalized coordinates, running seamlessly at high FPS on standard consumer laptops.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>Architecture &amp; Pipeline</h2>
+    <p class="sub">From webcam frame capture to voice synthesis.</p>
+
+    <div class="flow">
+      <div class="step"><b>OpenCV Video Stream</b><span>640×480 capture</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step hl"><b>MediaPipe Hands</b><span>21 landmarks (x, y, z)</span></div>
+    </div>
+    <div class="branches">
+      <div class="step">
+        <b>Letters Pipeline</b>
+        <span>63 normalized coordinates feed a pre-trained neural network. A 12-frame rolling consensus filter requires ≥75% agreement to eliminate flicker.</span>
+      </div>
+      <div class="step">
+        <b>Phrases Pipeline</b>
+        <span>30-frame temporal landmark sequences feed an SVM classifier trained via scikit-learn, activating only on consistent prediction runs.</span>
+      </div>
+      <div class="step">
+        <b>Spelling Game</b>
+        <span>Compares detections against active vocabulary challenges, updating target characters upon confident matching.</span>
+      </div>
+    </div>
+    <p style="margin-top:16px"><b>Text-to-Speech:</b> Employs macOS <code>say</code> or Windows <code>pyttsx3</code> for completely offline, zero-latency speech feedback.</p>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="wrap">
+    <h2>Tech Stack</h2>
+    <p class="sub">Open-source technologies powering the application.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Component</th><th>Technology</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>Language</td><td>Python 3.10–3.12</td><td>Core application orchestration</td></tr>
+          <tr><td>Vision</td><td>OpenCV (cv2)</td><td>Camera stream, bounding overlays, UI canvas</td></tr>
+          <tr><td>Landmarks</td><td>MediaPipe Hands 0.10.14</td><td>21-point geometric skeleton tracking</td></tr>
+          <tr><td>Alphabet Model</td><td>TensorFlow / Keras 2.16.2</td><td>Pre-trained ASL letter classifier</td></tr>
+          <tr><td>Phrase Model</td><td>scikit-learn (SVM) &amp; joblib</td><td>Dynamic gesture sequence classification</td></tr>
+          <tr><td>Data Processing</td><td>NumPy</td><td>Array normalization, temporal frame rolling</td></tr>
+          <tr><td>Audio Output</td><td>macOS <code>say</code> / <code>pyttsx3</code></td><td>Local zero-latency speech synthesis</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="wrap">
+    <h2>Quickstart &amp; Execution</h2>
+    <p class="sub">Run locally on macOS or Windows using Python.</p>
+<pre><code>git clone https://github.com/ericktitusk/gesture-communicator.git
+cd gesture-communicator
+
+python -m venv venv
+source venv/bin/activate        # macOS / Linux
+venv\Scripts\activate           # Windows
+
+pip install -r requirements.txt
+python app.py</code></pre>
+    <p><b>Controls:</b> <code>1</code> Letters Mode, <code>2</code> Phrases Mode, <code>3</code> Game Mode, <code>r</code> Reset text, <code>m</code> Mute audio, <code>f</code> Toggle fullscreen, <code>q</code> Quit.</p>
+  </div>
+</section>
+
+<section id="limits">
+  <div class="wrap">
+    <h2>Current Scope &amp; Future Work</h2>
+    <ul class="plain">
+      <li>Static fingerspelling recognizes letters A through Y (excluding moving signs J and Z).</li>
+      <li>Custom gestures expand vocabulary via simple <code>collect.py</code> and <code>train.py</code> cycles.</li>
+      <li>Optimal tracking requires decent front lighting and a single hand in camera view.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Hand Gesture Communicator</b> · SVS Symposium 2026 STEAM Project.</p>
+    <p><a href="https://github.com/ericktitusk/gesture-communicator">GitHub Repository</a></p>
+  </div>
+</footer>
+
+<script>
+// MediaPipe 21 Landmark Hand Diagram
+(function () {
+  var P = [
+    [150,310],
+    [105,265],[75,225],[55,190],[40,160],
+    [110,185],[100,135],[95,100],[92,70],
+    [145,170],[147,115],[148,78],[149,45],
+    [180,180],[190,130],[195,98],[198,70],
+    [210,205],[225,165],[233,140],[240,115]
+  ];
+  var C = [
+    [0,1],[1,2],[2,3],[3,4],
+    [0,5],[5,6],[6,7],[7,8],
+    [5,9],[9,10],[10,11],[11,12],
+    [9,13],[13,14],[14,15],[15,16],
+    [13,17],[17,18],[18,19],[19,20],
+    [0,17]
+  ];
+  var tips = { 4: 1, 8: 1, 12: 1, 16: 1, 20: 1 };
+  var labels = { 0: "0 (Wrist)", 4: "4 (Thumb)", 8: "8 (Index)", 12: "12 (Middle)", 16: "16 (Ring)", 20: "20 (Pinky)" };
+  var NS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById("hand");
+  if (!svg) return;
+  function el(name, attrs) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  C.forEach(function (c) {
+    svg.appendChild(el("line", { "class": "hand-line", x1: P[c[0]][0], y1: P[c[0]][1], x2: P[c[1]][0], y2: P[c[1]][1] }));
+  });
+  P.forEach(function (p, i) {
+    svg.appendChild(el("circle", { "class": "hand-dot" + (tips[i] ? " tip" : ""), cx: p[0], cy: p[1], r: tips[i] ? 6 : 5 }));
+  });
+  Object.keys(labels).forEach(function (i) {
+    var p = P[i];
+    var t = el("text", { "class": "hand-label", x: p[0] + 9, y: p[1] + (i == 0 ? 16 : 4) });
+    t.textContent = labels[i];
+    svg.appendChild(t);
+  });
+})();
+
+// Light/Dark Theme Switcher
+(function() {
+  var btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  var currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.dataset.theme = currentTheme;
+
+  btn.addEventListener('click', function() {
+    var nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = nextTheme;
+    localStorage.setItem('theme', nextTheme);
+  });
+})();
+
+// Image Fallback Placeholder
+(function () {
+  function placeholder(el, text) {
+    var d = document.createElement("div");
+    d.className = "placeholder";
+    d.textContent = text;
+    el.replaceWith(d);
+  }
+  document.querySelectorAll(".shot img").forEach(function (img) {
+    img.addEventListener("error", function () {
+      placeholder(img, "Place asset at: docs/" + img.getAttribute("src"));
+    });
+  });
+})();
+</script>
 </body>
 </html>
-
